@@ -69,7 +69,15 @@ function Connect() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "حصلت مشكلة"),
   });
 
-  const caps = (data?.capabilities ?? null) as Record<string, unknown> | null;
+  type Caps = {
+    checkedAt?: string;
+    authOk?: boolean;
+    sampleCount?: number;
+    fields?: Record<string, string | null>;
+    notes?: string[];
+  };
+  const caps = (data?.capabilities ?? null) as Caps | null;
+  const f = caps?.fields ?? {};
 
   return (
     <AppShell title="ربط بوسطة">
