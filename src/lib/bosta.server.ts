@@ -175,7 +175,8 @@ export async function fetchBostaDeliveries(
     }
     const list = pickList(res.body);
     if (!list.length) break;
-    for (const d of list) {
+    for (const item of list) {
+      const d = item as Record<string, any> & Json;
       const trackingNumber = String(d.trackingNumber ?? d.tracking_number ?? "").trim();
       if (!trackingNumber) continue;
       const stateValue = d.state?.value ?? d.state ?? d.status ?? null;
