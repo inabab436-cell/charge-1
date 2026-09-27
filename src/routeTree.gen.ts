@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedPayoutsRouteImport } from './routes/_authenticated/payouts'
+import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +47,11 @@ const AuthenticatedPayoutsRoute = AuthenticatedPayoutsRouteImport.update({
   path: '/payouts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payouts': typeof AuthenticatedPayoutsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/review': typeof AuthenticatedReviewRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/payouts': typeof AuthenticatedPayoutsRoute
+  '/pricing': typeof AuthenticatedPricingRoute
   '/review': typeof AuthenticatedReviewRoute
 }
 export interface FileRoutesById {
@@ -76,13 +84,28 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/payouts': typeof AuthenticatedPayoutsRoute
+  '/_authenticated/pricing': typeof AuthenticatedPricingRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/orders' | '/payouts' | '/review'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/orders'
+    | '/payouts'
+    | '/pricing'
+    | '/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/orders' | '/payouts' | '/review'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/orders'
+    | '/payouts'
+    | '/pricing'
+    | '/review'
   id:
     | '__root__'
     | '/'
@@ -91,6 +114,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/orders'
     | '/_authenticated/payouts'
+    | '/_authenticated/pricing'
     | '/_authenticated/review'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +168,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPayoutsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pricing': {
+      id: '/_authenticated/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthenticatedPricingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/review': {
       id: '/_authenticated/review'
       path: '/review'
@@ -158,6 +189,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPayoutsRoute: typeof AuthenticatedPayoutsRoute
+  AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
 }
 
@@ -165,6 +197,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPayoutsRoute: AuthenticatedPayoutsRoute,
+  AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
 }
 
