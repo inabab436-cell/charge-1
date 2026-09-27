@@ -6,8 +6,12 @@ export type SheetData = {
 };
 
 export async function parseSheetFile(file: File): Promise<SheetData> {
-  const buffer = await file.arrayBuffer();
-  const wb = XLSX.read(buffer, { type: "array", cellDates: false, raw: false });
+  const isCsv = /\.(csv|txt)$/i.test(file.name) || file.type === "text/csv";
+  // CSV files must be decoded as UTF-8 text, otherwise Arabic headers arrive mangled.
+  const wb = isCsv
+    ? XLSX.read(await file.text(), { type: "string", cellDates: false, raw: false })
+    : XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false, raw: false });
+
   const sheetName = wb.SheetNames[0];
   if (!sheetName) return { headers: [], rows: [] };
   const sheet = wb.Sheets[sheetName]!;
