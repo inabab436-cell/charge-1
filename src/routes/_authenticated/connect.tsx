@@ -69,7 +69,15 @@ function Connect() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "حصلت مشكلة"),
   });
 
-  const caps = (data?.capabilities ?? null) as Record<string, unknown> | null;
+  type Caps = {
+    checkedAt?: string;
+    authOk?: boolean;
+    sampleCount?: number;
+    fields?: Record<string, string | null>;
+    notes?: string[];
+  };
+  const caps = (data?.capabilities ?? null) as Caps | null;
+  const f = caps?.fields ?? {};
 
   return (
     <AppShell title="ربط بوسطة">
@@ -134,37 +142,47 @@ function Connect() {
               </button>
             </div>
             {caps ? (
-              <ul className="space-y-2 text-sm">
-                {[
-                  ["authOk", "الاتصال والمصادقة"],
-                  ["hasDeliveries", "قائمة الشحنات"],
-                  ["hasCollectedAmount", "المبلغ المحصّل فعليًا"],
-                  ["hasFees", "الرسوم المخصومة"],
-                  ["hasReference", "الرقم المرجعي للأوردر"],
-                  ["hasPayouts", "بيانات التحويلات البنكية"],
-                ].map(([key, label]) => {
-                  const ok = Boolean(caps[key as string]);
-                  return (
-                    <li key={key as string} className="flex items-center gap-2">
+              <>
+                <ul className="space-y-2 text-sm">
+                  {(
+                    [
+                      [Boolean(caps.authOk), "الاتصال والمصادقة"],
+                      [(caps.sampleCount ?? 0) > 0, "قراءة الشحنات"],
+                      [Boolean(f["trackingNumber"]), "رقم التتبع"],
+                      [Boolean(f["businessReference"]), "الرقم المرجعي للأوردر"],
+                      [Boolean(f["collectedAmount"]), "المبلغ المحصّل فعليًا"],
+                      [Boolean(f["fees"]), "الرسوم المخصومة"],
+                      [Boolean(f["payoutRef"]), "بيانات التحويلات البنكية"],
+                    ] as [boolean, string][]
+                  ).map(([ok, label]) => (
+                    <li key={label} className="flex items-center gap-2">
                       {ok ? (
                         <CheckCircle2 className="size-4 text-emerald-600" />
                       ) : (
                         <XCircle className="size-4 text-muted-foreground" />
                       )}
                       <span className={ok ? "text-foreground" : "text-muted-foreground"}>
-                        {label as string}
+                        {label}
                       </span>
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                </ul>
+                {(caps.notes ?? []).length > 0 && (
+                  <ul className="mt-4 space-y-2">
+                    {(caps.notes ?? []).map((n) => (
+                      <li
+                        key={n}
+                        className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                      >
+                        {n}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             ) : (
-              <p className="text-sm text-muted-foreground">لسه مفيش فحص. اضغط "افحص من جديد".</p>
-            )}
-            {caps && !caps["hasPayouts"] && (
-              <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                بوسطة مش بترجع التحويلات البنكية على حسابك، فارفع كشف التحويلات من صفحة الاستيراد
-                عشان نكمّل المقارنة.
+              <p className="text-sm text-muted-foreground">
+                لسه مفيش فحص. اضغط «افحص من جديد».
               </p>
             )}
           </div>
