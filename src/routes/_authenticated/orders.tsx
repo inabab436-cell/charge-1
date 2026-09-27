@@ -7,7 +7,7 @@ import { listOrders } from "@/lib/app.functions";
 import { formatEGP, STATUS_LABEL, type OrderStatus } from "@/lib/reconcile";
 import { StatusBadge } from "@/components/StatusBadge";
 
-type Search = { status?: string; q?: string };
+type Search = { status?: string | undefined; q?: string | undefined };
 
 export const Route = createFileRoute("/_authenticated/orders")({
   validateSearch: (search: Record<string, unknown>): Search => ({
