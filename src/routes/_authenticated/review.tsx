@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { listReview, resolveSuggestion, runMatching } from "@/lib/app.functions";
 import { formatEGP } from "@/lib/reconcile";
+import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/review")({
@@ -36,11 +37,9 @@ function Review() {
   const { data, isLoading } = useQuery({ queryKey: ["review"], queryFn: () => list({}) });
 
   const resolveMut = useMutation({
-    mutationFn: (v: { suggestionId: string; action: "accept" | "reject" }) => resolve({ data: v }),
+    mutationFn: (v: { id: string; accept: boolean }) => resolve({ data: v }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["review"] });
-      qc.invalidateQueries({ queryKey: ["overview"] });
-      qc.invalidateQueries({ queryKey: ["orders"] });
+      qc.invalidateQueries();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "حصلت مشكلة"),
   });
@@ -48,7 +47,7 @@ function Review() {
   const matchMut = useMutation({
     mutationFn: () => match({}),
     onSuccess: (r) => {
-      toast.success(`تم ربط ${r.matched} شحنة، و${r.suggested} محتاجة تأكيدك.`);
+      toast.success(`تم ربط ${r.autoMatched} شحنة تلقائيًا، و${r.suggested} محتاجة تأكيدك.`);
       qc.invalidateQueries();
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "حصلت مشكلة"),
@@ -56,9 +55,9 @@ function Review() {
 
   return (
     <AppShell title="يحتاج انتباهك">
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          دي الحالات اللي النظام مش متأكد منها 100%. تأكيدك بيخلّيه يتعلّم.
+          دي الحالات اللي النظام مش متأكد منها 100%. تأكيدك بيحسم الموضوع.
         </p>
         <button
           onClick={() => matchMut.mutate()}
@@ -79,7 +78,7 @@ function Review() {
             </h2>
             {data.suggestions.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
-                مفيش حاجة محتاجة تأكيد. كله متطابق.
+                مفيش حاجة محتاجة تأكيد.
               </p>
             ) : (
               <div className="space-y-3">
@@ -88,36 +87,37 @@ function Review() {
                     key={s.id}
                     className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid flex-1 gap-3 sm:grid-cols-2">
                       <div>
                         <p className="text-xs text-muted-foreground">الشحنة</p>
-                        <p className="font-semibold">{s.tracking_number}</p>
+                        <p className="font-semibold">{s.shipment?.tracking_number}</p>
                         <p className="text-xs text-muted-foreground">
-                          {s.shipment_name ?? "—"} · {s.shipment_phone ?? "—"} ·{" "}
-                          {formatEGP(s.shipment_cod)}
+                          {s.shipment?.customer_name ?? "—"} · {s.shipment?.phone ?? "—"} ·{" "}
+                          {formatEGP(s.shipment?.cod_amount ?? 0)}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">الأوردر المقترح</p>
-                        <p className="font-semibold">{s.order_ref}</p>
+                        <p className="font-semibold">{s.order?.order_ref}</p>
                         <p className="text-xs text-muted-foreground">
-                          {s.order_name ?? "—"} · {s.order_phone ?? "—"} · {formatEGP(s.order_cod)}
+                          {s.order?.customer_name ?? "—"} · {s.order?.phone ?? "—"} ·{" "}
+                          {formatEGP(s.order?.cod_amount ?? 0)}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground">
                         {METHOD_LABEL[s.method] ?? s.method} · {Math.round(s.score * 100)}%
                       </span>
                       <button
-                        onClick={() => resolveMut.mutate({ suggestionId: s.id, action: "accept" })}
+                        onClick={() => resolveMut.mutate({ id: s.id, accept: true })}
                         disabled={resolveMut.isPending}
                         className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                       >
                         صح، اربطهم
                       </button>
                       <button
-                        onClick={() => resolveMut.mutate({ suggestionId: s.id, action: "reject" })}
+                        onClick={() => resolveMut.mutate({ id: s.id, accept: false })}
                         disabled={resolveMut.isPending}
                         className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-secondary disabled:opacity-60"
                       >
@@ -126,6 +126,50 @@ function Review() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mb-8">
+            <h2 className="mb-3 text-lg font-bold text-foreground">
+              فروق في الفلوس ({data.problems.length})
+            </h2>
+            {data.problems.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                كل اللي وصل مطابق للمتوقع.
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+                <table className="w-full text-right text-sm">
+                  <thead className="bg-secondary text-muted-foreground">
+                    <tr>
+                      <th className="p-3 font-medium">الأوردر</th>
+                      <th className="p-3 font-medium">الصافي المتوقع</th>
+                      <th className="p-3 font-medium">اللي وصل</th>
+                      <th className="p-3 font-medium">الفرق</th>
+                      <th className="p-3 font-medium">التحويل</th>
+                      <th className="p-3 font-medium">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.problems.map((r) => (
+                      <tr key={r.id} className="border-t border-border">
+                        <td className="p-3 font-medium">{r.order_ref}</td>
+                        <td className="p-3">{formatEGP(r.expectedNet)}</td>
+                        <td className="p-3">{formatEGP(r.paid ?? 0)}</td>
+                        <td
+                          className={`p-3 font-semibold ${r.diff < 0 ? "text-red-700" : "text-amber-700"}`}
+                        >
+                          {formatEGP(r.diff)}
+                        </td>
+                        <td className="p-3 text-xs text-muted-foreground">{r.payout_ref ?? "—"}</td>
+                        <td className="p-3">
+                          <StatusBadge status={r.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
@@ -156,8 +200,8 @@ function Review() {
                         <td className="p-3 font-medium">{s.tracking_number}</td>
                         <td className="p-3">{s.customer_name ?? "—"}</td>
                         <td className="p-3">{s.phone ?? "—"}</td>
-                        <td className="p-3">{formatEGP(s.cod_amount)}</td>
-                        <td className="p-3 text-muted-foreground">{s.state ?? "—"}</td>
+                        <td className="p-3">{formatEGP(s.cod_amount ?? 0)}</td>
+                        <td className="p-3 text-muted-foreground">{s.status ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
