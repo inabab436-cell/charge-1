@@ -11,14 +11,15 @@ async function call(
   path: string,
   init?: { method?: string; body?: Json },
 ): Promise<{ ok: boolean; status: number; body: any }> {
-  const res = await fetch(base + path, {
+  const requestInit: RequestInit = {
     method: init?.method ?? "GET",
     headers: {
       Authorization: apiKey,
       "Content-Type": "application/json",
     },
-    body: init?.body ? JSON.stringify(init.body) : undefined,
-  });
+  };
+  if (init?.body) requestInit.body = JSON.stringify(init.body);
+  const res = await fetch(base + path, requestInit);
   const text = await res.text();
   let body: any = text;
   try {
