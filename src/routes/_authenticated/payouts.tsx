@@ -45,9 +45,9 @@ function Payouts() {
                   <p className="text-sm text-muted-foreground">{p.itemCount} شحنة</p>
                 </div>
               </div>
-              {p.unmatchedItems > 0 && (
+              {p.itemCount - p.linked > 0 && (
                 <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                  فيه {p.unmatchedItems} سطر في التحويل لسه مش مربوط بشحنة عندك.
+                  فيه {p.itemCount - p.linked} سطر في التحويل لسه مش مربوط بأوردر عندك.
                 </p>
               )}
             </div>
